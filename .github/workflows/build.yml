@@ -1,6 +1,3 @@
-
-Kopieren
-
 name: Build StadiumHook DLL
  
 # Trigger: on push to main branch and manually
@@ -82,3 +79,4 @@ jobs:
           name: StadiumHook-MSVC-DLL
           path: StadiumHook_msvc.dll
           retention-days: 30
+ 
