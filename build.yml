@@ -1,5 +1,5 @@
 name: Build StadiumHook DLL
- 
+
 # Trigger: on push to main branch and manually
 on:
   push:
