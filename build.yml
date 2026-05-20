@@ -1,0 +1,81 @@
+name: Build StadiumHook DLL
+ 
+# Trigger: on push to main branch and manually
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+ 
+jobs:
+  build-mingw:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup MinGW
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc
+      
+      - name: Show source file
+        shell: msys2 {0}
+        run: |
+          ls -la
+          echo "Source size:"
+          wc -l StadiumHook.cpp
+      
+      - name: Compile DLL with MinGW
+        shell: msys2 {0}
+        run: |
+          x86_64-w64-mingw32-g++ \
+            -O2 -shared \
+            -static-libgcc -static-libstdc++ -static \
+            -Wl,--enable-stdcall-fixup \
+            -o StadiumHook.dll \
+            StadiumHook.cpp \
+            -lkernel32 -luser32
+          
+          ls -la StadiumHook.dll
+          file StadiumHook.dll
+      
+      - name: Strip debug symbols
+        shell: msys2 {0}
+        run: |
+          x86_64-w64-mingw32-strip --strip-all StadiumHook.dll
+          ls -la StadiumHook.dll
+      
+      - name: Upload DLL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StadiumHook-MinGW-DLL
+          path: StadiumHook.dll
+          retention-days: 30
+  
+  build-msvc:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      
+      - name: Compile DLL with MSVC
+        shell: cmd
+        run: |
+          cl.exe /nologo /O2 /MT /EHsc /LD StadiumHook.cpp /Fe:StadiumHook_msvc.dll /link kernel32.lib user32.lib
+          dir StadiumHook_msvc.dll
+      
+      - name: Upload DLL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StadiumHook-MSVC-DLL
+          path: StadiumHook_msvc.dll
+          retention-days: 30
